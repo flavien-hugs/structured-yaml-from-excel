@@ -11,7 +11,7 @@ app = typer.Typer(pretty_exceptions_show_locals=False)
 
 def __delegations(sheet):
     delegations_data = [
-        {"code": str(code), "name": name.strip()}
+        {"code": str(code), "name": str(name).strip()}
         for code, name in sheet["Délégations régionales"][["CODEDR", "NOMDR"]].values
     ]
     return [{"name": "Délégations régionales", "data": [{"code": "N/A", "data": delegations_data}]}]
@@ -23,12 +23,10 @@ def __regions(sheet):
     regions_grouped = sheet["Régions"].groupby("CODEDR")
     for codedr, _ in sheet["Délégations régionales"][["CODEDR", "NOMDR"]].values:
         try:
-            regions_in_delegation = sorted(
-                regions_grouped.get_group(codedr)[["CODEREG", "NOMREG"]].values, key=lambda x: x[1]
-            )
+            regions_in_delegation = regions_grouped.get_group(codedr)[["CODEREG", "NOMREG"]].values
             delegation_regions = [
-                {"code": str(codereg), "name": nomreg.strip()}
-                for codereg, nomreg in regions_in_delegation
+                {"code": str(code), "name": str(name).strip()}
+                for code, name in regions_in_delegation
             ]
             if delegation_regions:
                 regions_data.append({"code": str(codedr), "data": delegation_regions})
@@ -37,10 +35,10 @@ def __regions(sheet):
 
     unassigned_regions = sheet["Régions"][~sheet["Régions"]["CODEDR"].isin(sheet["Délégations régionales"]["CODEDR"])]
     if not unassigned_regions.empty:
-        unassigned_data = sorted([
-            {"code": str(codereg), "name": nomreg.strip()}
-            for codereg, nomreg in unassigned_regions[["CODEREG", "NOMREG"]].values
-        ], key=lambda x: x["name"])
+        unassigned_data = [
+            {"code": str(code), "name": str(name).strip()}
+            for code, name in unassigned_regions[["CODEREG", "NOMREG"]].values
+        ]
 
         regions_data.append({"code": "N/A", "data": unassigned_data})
 
@@ -53,13 +51,10 @@ def __departements(sheet):
     departements_grouped = sheet["Départements"].groupby("CODEREG")
     for codereg, nomreg, codedr in sheet["Régions"][["CODEREG", "NOMREG", "CODEDR"]].values:
         try:
-            departments_in_region = sorted(
-                departements_grouped.get_group(codereg)[["CODEDEP", "NOMDEP"]].to_dict(orient="records"),
-                key=lambda x: x["NOMDEP"]
-            )
+            departments_in_region = departements_grouped.get_group(codereg)[["CODEDEP", "NOMDEP"]].values
             region_departments = [
-                {"code": str(dep["CODEDEP"]), "name": dep["NOMDEP"].strip()}
-                for dep in departments_in_region
+                {"code": str(code), "name": str(name).strip()}
+                for code, name in departments_in_region
             ]
             if region_departments:
                 departments_data.append({"code": str(codereg), "data": region_departments})
@@ -69,10 +64,10 @@ def __departements(sheet):
     unassigned_departments = sheet["Départements"][
         ~sheet["Départements"]["CODEREG"].isin(sheet["Régions"]["CODEREG"])]
     if not unassigned_departments.empty:
-        unassigned_data = sorted([
-            {"code": str(codedep), "name": nomdep.strip()}
-            for codedep, nomdep in unassigned_departments[["CODEDEP", "NOMDEP"]].values
-        ], key=lambda x: x["name"])
+        unassigned_data = [
+            {"code": str(code), "name": str(name).strip()}
+            for code, name in unassigned_departments[["CODEDEP", "NOMDEP"]].values
+        ]
 
         regions_data.append({"code": "N/A", "data": unassigned_data})
 
@@ -85,11 +80,11 @@ def __sous_prefectures(sheet):
     sps_grouped = sheet["Sous-préfectures"].groupby("CODEDEP")
     for codedep, nomdep, codereg in sheet["Départements"][["CODEDEP", "NOMDEP", "CODEREG"]].values:
         try:
-            sps_in_departement = sps_grouped.get_group(codedep)[["CODESP", "NOMSP"]].to_dict(orient="records")
-            department_sps = sorted([
-                {"code": str(sps["CODESP"]), "name": sps["NOMSP"].strip()}
-                for sps in sps_in_departement
-            ], key=lambda x: x["name"])
+            sps_in_departement = sps_grouped.get_group(codedep)[["CODESP", "NOMSP"]].values
+            department_sps = [
+                {"code": str(code), "name": str(name).strip()}
+                for code, name in sps_in_departement
+            ]
 
             if department_sps:
                 sps_data.append({"code": str(codedep), "data": department_sps})
@@ -99,12 +94,10 @@ def __sous_prefectures(sheet):
     unassigned_sps = sheet["Sous-préfectures"][
         ~sheet["Sous-préfectures"]["CODEDEP"].isin(sheet["Départements"]["CODEDEP"])]
     if not unassigned_sps.empty:
-        unassigned_data = sorted(
-            [
-                {"code": str(codesp), "name": nomsp.strip()}
-                for codesp, nomsp in unassigned_sps[["CODESP", "NOMSP"]].values
-            ], key=lambda x: x["name"]
-        )
+        unassigned_data = [
+                {"code": str(code), "name": str(name).strip()}
+                for code, name in unassigned_sps[["CODESP", "NOMSP"]].values
+        ]
         sps_data.append({"code": "N/A", "data": unassigned_data})
 
     structure = [
@@ -124,11 +117,11 @@ def __localites(sheet):
 
     for codesp, nomsp, codedep in sheet["Sous-préfectures"][["CODESP", "NOMSP", "CODEDEP"]].values:
         try:
-            loc_in_sps = loc_grouped.get_group(codesp)[["CODELOC", "NOMLOC"]].to_dict(orient="records")
-            sps_loc = sorted([
-                {"code": str(loc["CODELOC"]), "name": loc["NOMLOC"].strip()}
-                for loc in loc_in_sps
-            ], key=lambda x: x["name"])
+            loc_in_sps = loc_grouped.get_group(codesp)[["CODELOC", "NOMLOC"]].values
+            sps_loc = [
+                {"code": str(code), "name": str(name).strip()}
+                for code, name in loc_in_sps
+            ]
 
             if sps_loc:
                 loc_data.append({"code": str(codesp), "data": sps_loc})
@@ -137,10 +130,10 @@ def __localites(sheet):
 
     unassigned_loc = sheet["Localités"][~sheet["Localités"]["CODESP"].isin(sheet["Sous-préfectures"]["CODESP"])]
     if not unassigned_loc.empty:
-        unassigned_data = sorted([
-            {"code": str(codesp), "name": nomsp.strip()}
-            for codesp, nomsp in unassigned_loc[["CODELOC", "NOMLOC"]].values
-        ], key=lambda x: x["name"])
+        unassigned_data = [
+            {"code": str(code), "name": str(name).strip()}
+            for code, name in unassigned_loc[["CODELOC", "NOMLOC"]].values
+        ]
 
         loc_data.append({"code": "N/A", "data": unassigned_data})
 
@@ -156,11 +149,11 @@ def __quartiers(sheet):
 
     for codeloc, nameloc, codesp in sheet["Localités"][["CODELOC", "NOMLOC", "CODESP"]].values:
         try:
-            quart_in_loc = quart_grouped.get_group(codeloc)[["CODEQUART", "NOMQUART"]].to_dict(orient="records")
-            quart_loc = sorted([
-                {"code": str(loc["CODEQUART"]), "name": loc["NOMQUART"].strip()}
-                for loc in quart_in_loc
-            ], key=lambda x: x["name"])
+            quart_in_loc = quart_grouped.get_group(codeloc)[["CODEQUART", "NOMQUART"]].values
+            quart_loc = [
+                {"code": str(code), "name": str(name).strip()}
+                for code, name in quart_in_loc
+            ]
 
             if quart_loc:
                 quartiers_data.append({"code": str(codeloc), "data": quart_loc})
@@ -169,10 +162,10 @@ def __quartiers(sheet):
 
     unassigned_quart = sheet["Quartiers"][~sheet["Quartiers"]["CODELOC"].isin(sheet["Localités"]["CODELOC"])]
     if not unassigned_quart.empty:
-        unassigned_data = sorted([
-            {"code": str(codequart), "name": nomquart.strip()}
-            for codequart, nomquart in unassigned_quart[["CODEQUART", "NOMQUART"]].values
-        ], key=lambda x: x["name"])
+        unassigned_data = [
+            {"code": str(code), "name": str(name).strip()}
+            for code, name in unassigned_quart[["CODEQUART", "NOMQUART"]].values
+        ]
 
         quartiers_data.append({"code": "N/A", "data": unassigned_quart})
 
@@ -215,6 +208,24 @@ def main(
         $ poetry run generate-data --filepath path/to/your/data.xlsx --output-file path/to/output/areadata.yml
     """
 
+    class QuotedString(str):
+        pass
+
+    def quoted_presenter(dumper, data):
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style="'")
+
+    yaml.add_representer(QuotedString, quoted_presenter)
+
+    # Fonction pour convertir les chaînes en QuotedString
+    def convert_to_quoted(obj):
+        if isinstance(obj, dict):
+            return {k: convert_to_quoted(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_to_quoted(i) for i in obj]
+        elif isinstance(obj, str):
+            return QuotedString(obj)
+        return obj
+
     sheet = load_sheets(filepath=filepath)
 
     delegation_structure = __delegations(sheet)
@@ -230,9 +241,12 @@ def main(
             localites_structure + quartiers_structure
     )
 
+    # Conversion des chaînes en QuotedString
+    quoted_structure = convert_to_quoted(combined_structure)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as file:
-        yaml.dump(combined_structure, file, allow_unicode=True, sort_keys=False)
+        yaml.dump(quoted_structure, file, allow_unicode=True, sort_keys=False)
 
     typer.echo(f"Data structure generated successfully at '{output_path}'.")
 
