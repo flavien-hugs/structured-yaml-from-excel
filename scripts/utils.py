@@ -19,7 +19,7 @@ def load_sheets(filepath: Union[Path, str]):
             filepath,
             sheet_name=[
                 "Délégations régionales", "Régions", "Départements",
-                "Sous-préfectures", "Localités", "Quartiers"
+                "Sous-préfectures", "Localités", "ZD", "Quartiers"
             ],
             dtype=str
         )

@@ -142,6 +142,29 @@ def __localites(sheet):
     return structure
 
 
+def __zone_denombrement(sheet):
+
+    zone_data = []
+    zone_grouped = sheet["ZD"].groupby("CODELOC")
+
+    for codeloc, nameloc, codesp in sheet["Localités"][["CODELOC", "NOMLOC", "CODESP"]].values:
+        try:
+            zoned_in_loc = zone_grouped.get_group(codeloc)[["CODEZD", "NOMZD"]].values
+            zoned_loc = [
+                {"code": str(code), "name": str(name).strip()}
+                for code, name in zoned_in_loc
+            ]
+
+            if zoned_loc:
+                zone_data.append({"code": str(codeloc), "data": zoned_loc})
+        except KeyError:
+            continue
+
+    structure = [{"name": "Zone de denombrement", "data": zone_data}]
+
+    return structure
+
+
 def __quartiers(sheet):
 
     quartiers_data = []
@@ -233,12 +256,13 @@ def main(
     departements_structure = __departements(sheet)
     sous_prectures_structure = __sous_prefectures(sheet)
     localites_structure = __localites(sheet)
-    quartiers_structure = __quartiers(sheet)
+    zone_structure = __zone_denombrement(sheet)
+    # quartiers_structure = __quartiers(sheet)
 
     combined_structure = (
             delegation_structure + regions_structure +
             departements_structure + sous_prectures_structure +
-            localites_structure + quartiers_structure
+            localites_structure + zone_structure
     )
 
     # Conversion des chaînes en QuotedString
